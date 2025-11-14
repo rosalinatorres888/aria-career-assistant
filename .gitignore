@@ -1,0 +1,26 @@
+# Environment
+.env
+aria_config.yaml
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+env/
+
+# Data/Logs
+data/
+logs/
+*.json
+!example_*.json
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+
+# Credentials
+*token*
+*secret*
+*key*
