@@ -1,6 +1,6 @@
 # 🤖 ARIA - Autonomous Career Assistant
 
-Your 24/7 AI-powered career management system that handles everything from opportunity detection to network engagement with zero manual intervention.
+24/7 AI-powered career management system that handles everything from opportunity detection to network engagement with zero manual intervention.
 
 ## ✨ Key Features
 
@@ -59,7 +59,7 @@ python src/aria.py
 ## 👩‍💻 Author
 
 Rosalina Torres - ML/AI Engineer
-- LinkedIn: [linkedin.com/in/rosalinatorres](https://linkedin.com/in/rosalinatorres)
+- LinkedIn: [linkedin.com/in/rosalinatorres](https://linkedin.com/in/rosalina-torres)
 - GitHub: [@rosalinatorres888](https://github.com/rosalinatorres888)
 
 ## 📄 License
