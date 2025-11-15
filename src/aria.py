@@ -1,6 +1,6 @@
 """
 ARIA - Autonomous Career Assistant
-Your 24/7 AI-powered career management system
+AI-powered career management system
 Handles everything from monitoring to execution with zero manual intervention
 """
 
