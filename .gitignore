@@ -1,26 +1,40 @@
-# Environment
+# ── Secrets & credentials ──────────────────────────────────────────────────────
 .env
+*.env
 aria_config.yaml
-*.log
+config/aria_config.yaml
+*secret*
+*token*
+*key*
+.aria_secrets
 
-# Python
+# ── Runtime / state files ──────────────────────────────────────────────────────
+aria_state.json
+aria.log
+*.log
+aria_report_*.html
+aria_dashboard.html.bak
+aria_dashboard_broken.html
+
+# ── Python ─────────────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
+*.pyo
 venv/
 env/
+.venv/
 
-# Data/Logs
+# ── Data ───────────────────────────────────────────────────────────────────────
 data/
 logs/
 *.json
 !example_*.json
 
-# IDE
+# ── macOS ──────────────────────────────────────────────────────────────────────
+.DS_Store
+**/.DS_Store
+
+# ── IDE ────────────────────────────────────────────────────────────────────────
 .vscode/
 .idea/
-.DS_Store
-
-# Credentials
-*token*
-*secret*
-*key*
+*.swp

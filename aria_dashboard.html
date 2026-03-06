@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROSALINA — Career Command Center</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--surface:rgba(255,255,255,0.03);--border:rgba(255,255,255,0.06);--text:#e2e8f0;--muted:#94a3b8;--dim:#64748b;--faint:#475569;--cyan:#06b6d4;--purple:#8b5cf6;--lavender:#a78bfa;--green:#10b981;--yellow:#f59e0b;--red:#ef4444;--mono:'JetBrains Mono',monospace;--sans:'DM Sans',system-ui,sans-serif;--display:'Playfair Display',serif}
+*{margin:0;padding:0;box-sizing:border-box}body{background:var(--bg);color:var(--text);font-family:var(--sans)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+input::placeholder,textarea::placeholder{color:#374151}select option{background:#13131f;color:var(--text)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script type="text/babel">
+const {useState,useEffect,useCallback}=React;
+const API="http://localhost:5100";
+const STATS=["new","identified","applied","interviewing","offer","rejected","withdrawn"];
+const SC={new:{c:"#06b6d4",b:"rgba(6,182,212,.12)",i:"◆",l:"New"},identified:{c:"#8b5cf6",b:"rgba(139,92,246,.12)",i:"◎",l:"Identified"},applied:{c:"#f59e0b",b:"rgba(245,158,11,.12)",i:"→",l:"Applied"},interviewing:{c:"#10b981",b:"rgba(16,185,129,.12)",i:"◉",l:"Interviewing"},offer:{c:"#22c55e",b:"rgba(34,197,94,.15)",i:"★",l:"Offer"},rejected:{c:"#ef4444",b:"rgba(239,68,68,.10)",i:"✕",l:"Rejected"},withdrawn:{c:"#6b7280",b:"rgba(107,114,128,.10)",i:"—",l:"Withdrawn"}};
+const SRC={"BuiltInBoston":"#e879f9","Indeed":"#6366f1","Wellfound":"#f97316","YCombinator":"#ef4444","LinkedIn (via Google)":"#0ea5e9","Manual":"#94a3b8"};
+const TABS=[["pipeline","⟐ PIPELINE"],["resume","⚡ RESUME AI"],["analytics","◎ ANALYTICS"],["tracker","📋 TRACKER"],["cover","✉ COVER LETTER"]];
+const ARCH_KW={AI_ML:["machine learning","deep learning","neural network","llm","large language model","transformer","nlp","pytorch","tensorflow","scikit","hugging face","generative ai","gpt","claude","rag","embeddings","fine-tuning","prompt engineering","mlops","multi-agent","agentic"],Data_Engineering:["data pipeline","etl","elt","data warehouse","data lake","apache spark","pyspark","airflow","kafka","dbt","snowflake","databricks","bigquery","postgresql","mongodb","docker","kubernetes","aws","gcp","azure"],Analytics:["analytics","data analysis","business intelligence","bi","tableau","power bi","looker","dashboard","visualization","statistical analysis","hypothesis testing","a/b testing","pca","kpi","metrics","time series","pandas"],Governance_Ethics:["data governance","governance","compliance","regulatory","gdpr","ccpa","data catalog","data lineage","metadata","collibra","data quality","privacy","ai ethics","responsible ai","ai safety","bias detection","fairness","model risk","audit"]};
+const ARCH_META={AI_ML:{color:"#22c55e",bg:"rgba(34,197,94,.12)",label:"AI / ML"},Data_Engineering:{color:"#38bdf8",bg:"rgba(56,189,248,.12)",label:"Data Engineering"},Analytics:{color:"#fbbf24",bg:"rgba(251,191,36,.12)",label:"Analytics"},Governance_Ethics:{color:"#c084fc",bg:"rgba(192,132,252,.12)",label:"Governance & Ethics"}};
+const SKILLS={AI_ML:["Python","PyTorch","TensorFlow","Scikit-learn","Hugging Face","LangChain","OpenAI/Anthropic API","RAG / Vector Embeddings","Prompt Engineering","MLflow","NLP / Transformers","FastAPI","Multi-Agent Systems","RLHF / LLM Evaluation"],Data_Engineering:["Python","SQL / PostgreSQL","MongoDB","Apache Spark","Airflow","Docker / Kubernetes","AWS / GCP / Azure","ETL Pipeline Design","dbt","Snowflake / BigQuery","REST API","Data Modeling","CI/CD","Pandas / NumPy"],Analytics:["Python","SQL","Pandas / NumPy","Tableau","Power BI","Plotly / Streamlit","Statistical Analysis","A/B Testing","PCA / t-SNE","Time Series","Scikit-learn","Matplotlib / Seaborn"],Governance_Ethics:["Data Governance (Collibra)","AI Ethics & Bias Detection","GDPR / CCPA","LLM Evaluation & Red Teaming","Responsible AI","Data Quality","Privacy by Design","Model Risk Assessment","Human-in-the-Loop","Python","SQL"]};
+
+function scoreArch(text){
+  const low=text.toLowerCase();
+  const raw={};
+  for(const[a,kws]of Object.entries(ARCH_KW)){raw[a]=kws.filter(k=>low.includes(k)).length;}
+  const tot=Object.values(raw).reduce((s,v)=>s+v,0)||1;
+  return Object.fromEntries(Object.entries(raw).map(([k,v])=>[k,v/tot]));
+}
+const iBtnStyle=(accent)=>({padding:"7px 14px",borderRadius:7,border:"1px solid "+(accent?"rgba(6,182,212,.45)":"rgba(255,255,255,.1)"),background:accent?"linear-gradient(135deg,rgba(6,182,212,.2),rgba(139,92,246,.15))":"transparent",color:accent?"#06b6d4":"var(--dim)",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"var(--mono)"});
+const iInp={width:"100%",padding:"9px 12px",borderRadius:8,border:"1px solid rgba(255,255,255,.08)",background:"rgba(255,255,255,.03)",color:"var(--text)",fontSize:13,outline:"none",fontFamily:"var(--sans)",boxSizing:"border-box"};
+const iCard={background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)",borderRadius:12,padding:"18px 20px"};
+const sLbl={fontSize:10,textTransform:"uppercase",letterSpacing:".1em",color:"var(--dim)",fontFamily:"var(--mono)",marginBottom:8};
+
+function App(){
+  const[tab,setTab]=useState("pipeline");
+  const[jobs,sJ]=useState([]);const[fil,sF]=useState("all");const[src,sSrc]=useState("all");
+  const[q,sQ]=useState("");const[sel,sSel]=useState(null);const[notes,sN]=useState({});
+  const[modal,sM]=useState(false);const[qa,sQA]=useState({title:"",company:"",url:""});
+  const[api,sAPI]=useState(false);const[scan,sScan]=useState(null);const[now,sNow]=useState(new Date());
+  const goal=7;
+  useEffect(()=>{const t=setInterval(()=>sNow(new Date()),1000);return()=>clearInterval(t)},[]);
+  const load=useCallback(async()=>{
+    try{const r=await fetch(API+"/api/jobs");if(!r.ok)throw 0;const d=await r.json();sJ(d);sAPI(true);sScan(new Date().toISOString());}
+    catch(e){sAPI(false);try{const s=JSON.parse(localStorage.getItem("aria")||"{}");if(s.jobs)sJ(s.jobs);if(s.notes)sN(s.notes)}catch(e2){}}
+  },[]);
+  useEffect(()=>{load()},[load]);
+  useEffect(()=>{const i=setInterval(load,60000);return()=>clearInterval(i)},[load]);
+  useEffect(()=>{if(jobs.length)localStorage.setItem("aria",JSON.stringify({jobs,notes}))},[jobs,notes]);
+  const upStatus=useCallback(async(id,st)=>{
+    sJ(p=>p.map(j=>j.id===id?{...j,status:st,applied_date:st==="applied"?new Date().toISOString().split("T")[0]:j.applied_date}:j));
+    if(sel&&sel.id===id)sSel(p=>({...p,status:st}));
+    if(api)try{await fetch(API+"/api/applications/"+id,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({status:st})})}catch(e){}
+  },[sel,api]);
+  const addJob=useCallback(async()=>{
+    if(!qa.title||!qa.company)return;
+    const nj={id:Date.now().toString(),...qa,location:"TBD",confidence:.5,keywords_matched:[],posted_date:new Date().toISOString().split("T")[0],status:"identified",source:"Manual"};
+    sJ(p=>[nj,...p]);sQA({title:"",company:"",url:""});sM(false);
+    if(api)try{await fetch(API+"/api/jobs",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(nj)})}catch(e){}
+  },[qa,api]);
+  const doScan=useCallback(async()=>{if(!api)return;try{await fetch(API+"/api/scan",{method:"POST"});setTimeout(load,30000)}catch(e){}},[api,load]);
+  const today=new Date().toISOString().split("T")[0];
+  const applied=jobs.filter(j=>j.applied_date===today).length;
+  const pipe=STATS.reduce((a,s)=>{a[s]=jobs.filter(j=>j.status===s).length;return a},{});
+  const sources=[...new Set(jobs.map(j=>j.source))];
+  const filt=jobs.filter(j=>{
+    if(fil!=="all"&&j.status!==fil)return false;if(src!=="all"&&j.source!==src)return false;
+    if(q){const l=q.toLowerCase();return(j.title||"").toLowerCase().includes(l)||(j.company||"").toLowerCase().includes(l)||(j.keywords_matched||[]).some(k=>k.includes(l))}return true;
+  }).sort((a,b)=>(b.confidence||0)-(a.confidence||0));
+  const gp=Math.min((applied/goal)*100,100);
+  const s={
+    hdr:{background:"linear-gradient(135deg,rgba(6,182,212,.08),rgba(139,92,246,.06))",borderBottom:"1px solid rgba(6,182,212,.15)",padding:"13px 22px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,backdropFilter:"blur(20px)"},
+    logo:{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg,#06b6d4,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:"#fff",boxShadow:"0 0 14px rgba(6,182,212,.3)"},
+    brand:{fontFamily:"var(--display)",fontSize:16,fontWeight:800,background:"linear-gradient(135deg,#06b6d4,#a78bfa)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"},
+    card:{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:11,padding:"15px 17px"},
+    lbl:{fontSize:10,textTransform:"uppercase",letterSpacing:".1em",color:"var(--dim)",fontFamily:"var(--mono)",marginBottom:7},
+    val:{fontSize:28,fontWeight:700,fontFamily:"var(--display)"},
+    sub:{fontSize:9,color:"var(--faint)",marginTop:4,fontFamily:"var(--mono)"},
+    btn:{padding:"6px 13px",borderRadius:7,border:"1px solid rgba(6,182,212,.4)",background:"linear-gradient(135deg,rgba(6,182,212,.15),rgba(139,92,246,.1))",color:"#06b6d4",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"var(--mono)"},
+    inp:{width:220,padding:"7px 12px 7px 28px",borderRadius:7,border:"1px solid rgba(255,255,255,.08)",background:"var(--surface)",color:"var(--text)",fontSize:11,fontFamily:"var(--sans)",outline:"none"},
+    sel2:{padding:"7px 9px",borderRadius:7,border:"1px solid rgba(255,255,255,.08)",background:"var(--surface)",color:"var(--muted)",fontSize:11,outline:"none",cursor:"pointer"},
+    tbl:{background:"var(--surface)",border:"1px solid rgba(255,255,255,.05)",borderRadius:11,overflow:"hidden"},
+    th:{display:"grid",gridTemplateColumns:"34px 1fr 130px 72px 88px 108px",padding:"8px 13px",borderBottom:"1px solid var(--border)",background:"rgba(255,255,255,.02)"},
+    tr:{display:"grid",gridTemplateColumns:"34px 1fr 130px 72px 88px 108px",padding:"10px 13px",cursor:"pointer",borderBottom:"1px solid rgba(255,255,255,.03)",borderLeft:"2px solid transparent",transition:"all .15s"},
+    det:{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:11,padding:18,position:"sticky",top:68,alignSelf:"start"},
+  };
+
+  return(
+    <div>
+      <div style={s.hdr}>
+        <div style={{display:"flex",alignItems:"center",gap:11}}>
+          <div style={s.logo}>R</div>
+          <div><div style={s.brand}>ROSALINA</div><div style={{fontSize:9,color:"var(--dim)",fontFamily:"var(--mono)",letterSpacing:".08em",textTransform:"uppercase"}}>Career Command Center</div></div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{display:"flex",gap:2,padding:"3px",borderRadius:8,background:"rgba(255,255,255,.04)",border:"1px solid var(--border)"}}>
+            {TABS.map(([t,l])=><button key={t} onClick={()=>setTab(t)} style={{padding:"4px 10px",borderRadius:5,border:"none",fontSize:9,fontWeight:600,cursor:"pointer",fontFamily:"var(--mono)",background:tab===t?"linear-gradient(135deg,rgba(6,182,212,.3),rgba(139,92,246,.2))":"transparent",color:tab===t?"var(--cyan)":"var(--dim)",transition:"all .2s"}}>{l}</button>)}
+          </div>
+          <div style={{textAlign:"right"}}>
+            <div style={{fontFamily:"var(--mono)",fontSize:11,color:"var(--muted)"}}>{now.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})}</div>
+            <div style={{fontFamily:"var(--mono)",fontSize:9,color:"var(--faint)"}}>{now.toLocaleTimeString()}</div>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:5,padding:"4px 9px",borderRadius:14,background:api?"rgba(16,185,129,.12)":"rgba(239,68,68,.12)",border:"1px solid "+(api?"rgba(16,185,129,.3)":"rgba(239,68,68,.3)")}}>
+            <div style={{width:6,height:6,borderRadius:"50%",background:api?"var(--green)":"var(--red)",animation:api?"pulse 2s infinite":"none"}}/>
+            <span style={{fontSize:9,fontFamily:"var(--mono)",color:api?"var(--green)":"var(--red)"}}>{api?"LIVE":"OFFLINE"}</span>
+          </div>
+        </div>
+      </div>
+      <div style={{padding:"16px 22px",maxWidth:1400,margin:"0 auto"}}>
+        {!api&&<div style={{padding:"6px 13px",background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.2)",borderRadius:6,marginBottom:12,fontSize:10,color:"var(--red)",fontFamily:"var(--mono)"}}>○ Offline — run: <strong>source venv/bin/activate &amp;&amp; python3 aria_api.py</strong></div>}
+        {tab==="analytics"?<AnalyticsTab jobs={jobs}/>
+        :tab==="tracker"?<TrackerTab jobs={jobs} api={api} upStatus={upStatus}/>
+        :tab==="cover"?<CoverLetterTab/>
+        :tab==="resume"?<ResumeTab api={api}/>
+        :<PipelineTab jobs={jobs} fil={fil} sF={sF} src={src} sSrc={sSrc} q={q} sQ={sQ} sel={sel} sSel={sSel} notes={notes} sN={sN} modal={modal} sM={sM} qa={qa} sQA={sQA} scan={scan} applied={applied} goal={goal} gp={gp} pipe={pipe} sources={sources} filt={filt} upStatus={upStatus} addJob={addJob} doScan={doScan} load={load} s={s}/>}
+      </div>
+    </div>
+  );
+}
+
+function PipelineTab({jobs,fil,sF,src,sSrc,q,sQ,sel,sSel,notes,sN,modal,sM,qa,sQA,scan,applied,goal,gp,pipe,sources,filt,upStatus,addJob,doScan,load,s}){
+  return(<div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1.5fr",gap:11,marginBottom:16}}>
+      <div style={s.card}><div style={s.lbl}>Daily Target</div><div style={{display:"flex",alignItems:"baseline",gap:4,marginBottom:7}}><span style={{...s.val,color:applied>=goal?"var(--green)":"var(--cyan)"}}>{applied}</span><span style={{fontSize:12,color:"var(--faint)"}}>/ {goal}</span></div><div style={{height:3,borderRadius:2,background:"rgba(255,255,255,.06)",overflow:"hidden"}}><div style={{height:"100%",width:gp+"%",borderRadius:2,background:gp>=100?"linear-gradient(90deg,var(--green),#22c55e)":"linear-gradient(90deg,var(--cyan),var(--purple))",transition:"width .6s"}}/></div><div style={s.sub}>{goal-applied>0?(goal-applied)+" more to go":"Goal reached!"}</div></div>
+      <div style={s.card}><div style={s.lbl}>Jobs Found</div><div style={s.val}>{jobs.length}</div><div style={s.sub}>across {sources.length} sources</div></div>
+      <div style={s.card}><div style={s.lbl}>Avg Match</div><div style={{...s.val,color:"var(--lavender)"}}>{jobs.length?Math.round(jobs.reduce((x,j)=>x+(j.confidence||0),0)/jobs.length*100):0}%</div><div style={s.sub}>confidence score</div></div>
+      <div style={s.card}><div style={s.lbl}>Pipeline</div><div style={{display:"flex",gap:5,flexWrap:"wrap",marginTop:2}}>{["new","applied","interviewing","offer","rejected"].map(st=>{const c=SC[st];return(<div key={st} onClick={()=>sF(fil===st?"all":st)} style={{display:"flex",alignItems:"center",gap:4,padding:"3px 7px",borderRadius:6,cursor:"pointer",border:"1px solid "+(fil===st?c.c+"40":"var(--border)"),background:fil===st?c.b:"var(--surface)",transition:"all .2s"}}><span style={{fontSize:10,color:c.c}}>{c.i}</span><span style={{fontSize:9,color:fil===st?c.c:"var(--muted)",fontFamily:"var(--mono)"}}>{pipe[st]||0}</span><span style={{fontSize:8,color:"var(--faint)"}}>{c.l}</span></div>);})}</div></div>
+    </div>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexWrap:"wrap",gap:7}}>
+      <div style={{display:"flex",gap:6}}><button style={s.btn} onClick={doScan}>⟳ Scan Now</button><button style={{...s.btn,background:"transparent",borderColor:"var(--border)",color:"var(--dim)"}} onClick={load}>↻ Refresh</button></div>
+      <div style={{display:"flex",gap:7,alignItems:"center",flexWrap:"wrap"}}>
+        <div style={{position:"relative"}}><input style={s.inp} value={q} onChange={e=>sQ(e.target.value)} placeholder="Search jobs, companies…"/><span style={{position:"absolute",left:8,top:"50%",transform:"translateY(-50%)",fontSize:12,color:"var(--faint)"}}>⌕</span></div>
+        <select style={s.sel2} value={src} onChange={e=>sSrc(e.target.value)}><option value="all">All Sources</option>{sources.map(x=><option key={x} value={x}>{x}</option>)}</select>
+        <button style={s.btn} onClick={()=>sM(true)}>+ Add Job</button>
+      </div>
+    </div>
+    {modal&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(4px)"}} onClick={e=>{if(e.target===e.currentTarget)sM(false)}}>
+      <div style={{background:"#13131f",border:"1px solid rgba(6,182,212,.2)",borderRadius:13,padding:24,width:390,boxShadow:"0 20px 60px rgba(0,0,0,.5)"}}>
+        <h3 style={{fontFamily:"var(--display)",fontSize:17,color:"var(--cyan)",marginBottom:16}}>Add Job Manually</h3>
+        {["title","company","url"].map(f=><div key={f} style={{marginBottom:10}}><label style={{display:"block",fontSize:9,textTransform:"uppercase",letterSpacing:".1em",color:"var(--dim)",marginBottom:3,fontFamily:"var(--mono)"}}>{f}</label><input value={qa[f]} onChange={e=>sQA(p=>({...p,[f]:e.target.value}))} style={{width:"100%",padding:"7px 10px",borderRadius:6,border:"1px solid rgba(255,255,255,.1)",background:"rgba(255,255,255,.04)",color:"var(--text)",fontSize:12,outline:"none"}} placeholder={f==="title"?"Data Analyst Intern":f==="company"?"Company":"https://"}/></div>)}
+        <div style={{display:"flex",gap:7,marginTop:5}}><button onClick={addJob} style={{flex:1,padding:8,borderRadius:6,border:"none",background:"linear-gradient(135deg,#06b6d4,#8b5cf6)",color:"#fff",fontWeight:600,fontSize:11,cursor:"pointer"}}>Add to Pipeline</button><button onClick={()=>sM(false)} style={{padding:"8px 16px",borderRadius:6,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"var(--dim)",fontSize:11,cursor:"pointer"}}>Cancel</button></div>
+      </div>
+    </div>}
+    <div style={{display:"grid",gridTemplateColumns:sel?"1fr 350px":"1fr",gap:12,transition:"all .3s"}}>
+      <div style={s.tbl}>
+        <div style={s.th}>{["","Role","Company","Match","Source","Status"].map(h=><div key={h} style={{fontSize:8,textTransform:"uppercase",letterSpacing:".1em",color:"var(--faint)",fontFamily:"var(--mono)"}}>{h}</div>)}</div>
+        <div style={{maxHeight:490,overflowY:"auto"}}>
+          {filt.length===0?<div style={{padding:32,textAlign:"center",color:"var(--faint)",fontSize:11}}>{jobs.length===0?"No jobs yet — click Scan Now":"No jobs match filters"}</div>
+          :filt.map((j,i)=>{const c=SC[j.status]||SC.new;const isSel=sel&&sel.id===j.id;return(
+            <div key={j.id} onClick={()=>sSel(isSel?null:j)} style={{...s.tr,background:isSel?"rgba(6,182,212,.06)":i%2?"rgba(255,255,255,.01)":"transparent",borderLeftColor:isSel?"var(--cyan)":"transparent"}}>
+              <div style={{fontSize:9,color:"var(--faint)",fontFamily:"var(--mono)",display:"flex",alignItems:"center"}}>{i+1}</div>
+              <div><div style={{fontSize:11,fontWeight:500,lineHeight:1.3,marginBottom:1}}>{j.title}</div><div style={{fontSize:8,color:"var(--dim)"}}>{j.location}</div></div>
+              <div style={{fontSize:10,color:"var(--muted)",display:"flex",alignItems:"center"}}>{j.company}</div>
+              <div style={{display:"flex",alignItems:"center"}}><span style={{fontSize:10,fontWeight:600,fontFamily:"var(--mono)",color:(j.confidence||0)>=.7?"var(--green)":(j.confidence||0)>=.5?"var(--yellow)":"var(--dim)"}}>{Math.round((j.confidence||0)*100)}%</span></div>
+              <div style={{display:"flex",alignItems:"center"}}><span style={{fontSize:8,padding:"1px 5px",borderRadius:3,background:((SRC[j.source]||"#666")+"18"),color:SRC[j.source]||"#666",fontFamily:"var(--mono)"}}>{(j.source||"").replace(" (via Google)","")}</span></div>
+              <div style={{display:"flex",alignItems:"center"}}><span style={{fontSize:9,padding:"2px 6px",borderRadius:5,background:c.b,color:c.c,fontFamily:"var(--mono)",fontWeight:500}}>{c.i} {c.l}</span></div>
+            </div>);})}
+        </div>
+        <div style={{padding:"8px 13px",borderTop:"1px solid rgba(255,255,255,.05)",display:"flex",justifyContent:"space-between",fontSize:9,color:"var(--faint)",fontFamily:"var(--mono)"}}><span>{filt.length} of {jobs.length} jobs</span><span>Last: {scan?new Date(scan).toLocaleTimeString():"—"}</span></div>
+      </div>
+      {sel&&<div style={s.det}>
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}><div><div style={{fontSize:14,fontWeight:600,lineHeight:1.3}}>{sel.title}</div><div style={{fontSize:11,color:"var(--muted)",marginTop:2}}>{sel.company}</div><div style={{fontSize:9,color:"var(--dim)",marginTop:2}}>{sel.location}</div></div><button onClick={()=>sSel(null)} style={{background:"none",border:"none",color:"var(--faint)",cursor:"pointer",fontSize:16}}>✕</button></div>
+        <div style={{background:"rgba(255,255,255,.03)",borderRadius:8,padding:11,marginBottom:11}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}><span style={{fontSize:8,textTransform:"uppercase",letterSpacing:".1em",color:"var(--dim)",fontFamily:"var(--mono)"}}>Match</span><span style={{fontSize:17,fontWeight:700,fontFamily:"var(--display)",color:(sel.confidence||0)>=.7?"var(--green)":"var(--yellow)"}}>{Math.round((sel.confidence||0)*100)}%</span></div><div style={{height:4,borderRadius:2,background:"rgba(255,255,255,.06)",overflow:"hidden"}}><div style={{height:"100%",width:((sel.confidence||0)*100)+"%",borderRadius:2,background:(sel.confidence||0)>=.7?"linear-gradient(90deg,var(--green),#22c55e)":"linear-gradient(90deg,var(--yellow),#f97316)"}}/></div></div>
+        {(sel.keywords_matched||[]).length>0&&<div style={{marginBottom:11}}><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:".1em",color:"var(--dim)",fontFamily:"var(--mono)",marginBottom:4}}>Keywords</div><div style={{display:"flex",flexWrap:"wrap",gap:3}}>{sel.keywords_matched.map(k=><span key={k} style={{fontSize:8,padding:"1px 6px",borderRadius:3,background:"rgba(6,182,212,.1)",border:"1px solid rgba(6,182,212,.2)",color:"var(--cyan)",fontFamily:"var(--mono)"}}>{k}</span>)}</div></div>}
+        <div style={{marginBottom:11}}><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:".1em",color:"var(--dim)",fontFamily:"var(--mono)",marginBottom:4}}>Status</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:3}}>{STATS.filter(x=>x!=="new").map(st=>{const c=SC[st];const on=sel.status===st;return(<button key={st} onClick={()=>upStatus(sel.id,st)} style={{padding:"4px 6px",borderRadius:4,fontSize:9,cursor:"pointer",fontFamily:"var(--mono)",border:"1px solid "+(on?c.c+"50":"var(--border)"),background:on?c.b:"rgba(255,255,255,.02)",color:on?c.c:"var(--dim)",textAlign:"center"}}>{c.i} {c.l}</button>);})}</div></div>
+        <div style={{marginBottom:11}}><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:".1em",color:"var(--dim)",fontFamily:"var(--mono)",marginBottom:4}}>Notes</div><textarea rows={3} value={notes[sel.id]||""} onChange={e=>sN(p=>({...p,[sel.id]:e.target.value}))} placeholder="Add notes…" style={{width:"100%",padding:8,borderRadius:6,border:"1px solid rgba(255,255,255,.08)",background:"var(--surface)",color:"var(--text)",fontSize:10,resize:"vertical",outline:"none",fontFamily:"var(--sans)"}}/></div>
+        <a href={sel.url} target="_blank" rel="noopener noreferrer" style={{display:"block",textAlign:"center",padding:8,borderRadius:6,textDecoration:"none",background:"linear-gradient(135deg,var(--cyan),var(--purple))",color:"#fff",fontWeight:600,fontSize:11,marginBottom:5}}>Open Posting →</a>
+        {(sel.status==="new"||sel.status==="identified")&&<button onClick={()=>upStatus(sel.id,"applied")} style={{display:"block",width:"100%",textAlign:"center",padding:8,borderRadius:6,border:"1px solid rgba(245,158,11,.4)",background:"rgba(245,158,11,.1)",color:"var(--yellow)",fontWeight:600,fontSize:11,cursor:"pointer"}}>Mark as Applied ✓</button>}
+        <div style={{fontSize:8,color:"var(--faint)",marginTop:9,fontFamily:"var(--mono)"}}>Source: {sel.source} · Posted: {sel.posted_date}</div>
+      </div>}
+    </div>
+  </div>);
+}
+
+function AnalyticsTab({jobs}){
+  const total=jobs.length||1;
+  const byStatus=["new","identified","applied","interviewing","offer","rejected"].reduce((a,s)=>{a[s]=jobs.filter(j=>j.status===s).length;return a},{});
+  const bySource=[...new Set(jobs.map(j=>j.source||"Unknown"))].map(s=>({s,c:jobs.filter(j=>j.source===s).length})).sort((a,b)=>b.c-a.c);
+  const avgScore=jobs.length?Math.round(jobs.reduce((x,j)=>x+(j.confidence||0),0)/jobs.length*100):0;
+  const highMatch=jobs.filter(j=>(j.confidence||0)>=0.7).length;
+  const appliedN=jobs.filter(j=>["applied","interviewing","offer"].includes(j.status)).length;
+  const kwMap={};
+  jobs.forEach(j=>(j.keywords_matched||[]).forEach(k=>{kwMap[k]=(kwMap[k]||0)+1;}));
+  const topKw=Object.entries(kwMap).sort((a,b)=>b[1]-a[1]).slice(0,20);
+  const maxKw=topKw[0]?.[1]||1;
+  const buckets=[[0,20,"#ef4444"],[20,35,"#f59e0b"],[35,50,"#06b6d4"],[50,70,"#8b5cf6"],[70,100,"#10b981"]];
+  const dist=buckets.map(([lo,hi,col])=>({label:lo+"-"+hi+"%",col,count:jobs.filter(j=>{const sc=(j.confidence||0)*100;return sc>=lo&&sc<hi;}).length}));
+  const maxDist=Math.max(...dist.map(d=>d.count),1);
+  return(<div style={{animation:"fadeIn .4s ease both"}}>
+    <div style={{marginBottom:16,color:"var(--cyan)",fontWeight:700,fontFamily:"var(--mono)",fontSize:13}}>◎ SEMANTIC ANALYTICS — {jobs.length} jobs analyzed</div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:11,marginBottom:14}}>
+      {[[avgScore+"%","Avg Match","var(--cyan)"],[highMatch,"High Matches","var(--green)"],[Math.round(appliedN/total*100)+"%","Conversion Rate","var(--yellow)"],[byStatus.offer||0,"Offers","#22c55e"]].map(([v,l,c])=>(
+        <div key={l} style={iCard}><div style={sLbl}>{l}</div><div style={{fontSize:30,fontWeight:700,color:c,fontFamily:"var(--display)"}}>{v}</div></div>
+      ))}
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:11,marginBottom:11}}>
+      <div style={iCard}>
+        <div style={sLbl}>Match Score Distribution</div>
+        {dist.map(({label,col,count})=>(
+          <div key={label} style={{marginBottom:8}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:10,color:"var(--muted)",fontFamily:"var(--mono)"}}>{label}</span><span style={{fontSize:10,color:"var(--text)",fontFamily:"var(--mono)"}}>{count}</span></div>
+            <div style={{height:6,borderRadius:3,background:"rgba(255,255,255,.06)"}}><div style={{height:"100%",width:(count/maxDist*100)+"%",borderRadius:3,background:col,transition:"width .8s"}}/></div>
+          </div>
+        ))}
+      </div>
+      <div style={iCard}>
+        <div style={sLbl}>Application Funnel</div>
+        {[["new","#06b6d4"],["identified","#8b5cf6"],["applied","#f59e0b"],["interviewing","#10b981"],["offer","#22c55e"],["rejected","#ef4444"]].map(([st,col])=>{
+          const n=byStatus[st]||0;const pct=Math.round(n/total*100);
+          return(<div key={st} style={{marginBottom:7}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:10,color:col,fontFamily:"var(--mono)",textTransform:"capitalize"}}>{st}</span><span style={{fontSize:10,color:"var(--muted)",fontFamily:"var(--mono)"}}>{n} ({pct}%)</span></div>
+            <div style={{height:5,borderRadius:2,background:"rgba(255,255,255,.06)"}}><div style={{height:"100%",width:pct+"%",borderRadius:2,background:col,opacity:.75}}/></div>
+          </div>);
+        })}
+      </div>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:11}}>
+      <div style={iCard}>
+        <div style={sLbl}>Top Keyword Matches</div>
+        {topKw.length===0?<div style={{color:"var(--faint)",fontSize:11}}>No keyword data yet — run a scan first</div>:
+        <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+          {topKw.map(([kw,cnt])=>{const i=cnt/maxKw;return(<span key={kw} style={{padding:"3px 8px",borderRadius:5,fontSize:9,fontFamily:"var(--mono)",background:"rgba(6,182,212,"+(0.08+i*0.42)+")",border:"1px solid rgba(6,182,212,"+(0.15+i*0.5)+")",color:"var(--cyan)"}}>{kw} <span style={{opacity:.5}}>x{cnt}</span></span>);})}
+        </div>}
+      </div>
+      <div style={iCard}>
+        <div style={sLbl}>Jobs by Source</div>
+        {bySource.slice(0,7).map(({s,c})=>{const col=(SRC[s]||"#7EB8D4");return(<div key={s} style={{marginBottom:7}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:10,color:col,fontFamily:"var(--mono)"}}>{s.replace(" (via Google)","")}</span><span style={{fontSize:10,color:"var(--muted)",fontFamily:"var(--mono)"}}>{c} ({Math.round(c/total*100)}%)</span></div>
+          <div style={{height:5,borderRadius:2,background:"rgba(255,255,255,.06)"}}><div style={{height:"100%",width:(c/total*100)+"%",borderRadius:2,background:col,opacity:.65}}/></div>
+        </div>);})}
+      </div>
+    </div>
+  </div>);
+}
+
+function TrackerTab({jobs,api,upStatus}){
+  const[filter,setFilter]=useState("all");
+  const[search,setSearch]=useState("");
+  const[notes,setNotes]=useState({});
+  const[followUp,setFollowUp]=useState({});
+  const[expanded,setExpanded]=useState(null);
+  const STAGES=["identified","applied","interviewing","offer","rejected","withdrawn"];
+  const SC2={identified:{c:"#8b5cf6",l:"Identified"},applied:{c:"#f59e0b",l:"Applied"},interviewing:{c:"#10b981",l:"Interviewing"},offer:{c:"#22c55e",l:"Offer"},rejected:{c:"#ef4444",l:"Rejected"},withdrawn:{c:"#6b7280",l:"Withdrawn"}};
+  const today=new Date().toISOString().split("T")[0];
+  const tracked=jobs.filter(j=>j.status&&j.status!=="new");
+  const filtered=tracked.filter(j=>{
+    if(filter!=="all"&&j.status!==filter)return false;
+    if(search){const l=search.toLowerCase();return(j.title||"").toLowerCase().includes(l)||(j.company||"").toLowerCase().includes(l);}
+    return true;
+  });
+  return(<div style={{animation:"fadeIn .4s ease both"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:8}}>
+      <div style={{color:"var(--cyan)",fontWeight:700,fontFamily:"var(--mono)",fontSize:13}}>📋 APPLICATION TRACKER — {tracked.length} tracked</div>
+      <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…" style={{padding:"5px 10px",borderRadius:6,border:"1px solid rgba(255,255,255,.08)",background:"rgba(255,255,255,.03)",color:"var(--text)",fontSize:10,outline:"none",fontFamily:"var(--mono)",width:140}}/>
+        {["all",...STAGES].map(s=><button key={s} onClick={()=>setFilter(s)} style={{padding:"3px 9px",borderRadius:4,fontSize:9,cursor:"pointer",fontFamily:"var(--mono)",border:"1px solid "+(filter===s?((SC2[s]||{c:"var(--cyan)"}).c+"40"):"rgba(255,255,255,.07)"),background:filter===s?"rgba(255,255,255,.05)":"transparent",color:filter===s?((SC2[s]||{c:"var(--cyan)"}).c):"var(--dim)"}}>{s==="all"?"All":(SC2[s]&&SC2[s].l)||s}</button>)}
+      </div>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:6,marginBottom:16}}>
+      {STAGES.map(st=>{const c=SC2[st];const n=tracked.filter(j=>j.status===st).length;return(
+        <div key={st} onClick={()=>setFilter(filter===st?"all":st)} style={{padding:"9px 10px",borderRadius:8,background:filter===st?(c.c+"20"):"rgba(255,255,255,.02)",border:"1px solid "+(filter===st?(c.c+"40"):"rgba(255,255,255,.06)"),cursor:"pointer",textAlign:"center",transition:"all .2s"}}>
+          <div style={{fontSize:19,fontWeight:700,color:c.c,fontFamily:"var(--display)"}}>{n}</div>
+          <div style={{fontSize:8,color:"var(--faint)",fontFamily:"var(--mono)",marginTop:2,textTransform:"uppercase",letterSpacing:".05em"}}>{c.l}</div>
+        </div>
+      );})}
+    </div>
+    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+      {filtered.length===0?<div style={{textAlign:"center",padding:32,color:"var(--faint)",fontSize:11}}>No applications match filter</div>
+      :filtered.map(j=>{
+        const c=SC2[j.status]||SC2.identified;
+        const isExp=expanded===j.id;
+        const fu=followUp[j.id];
+        const isPastDue=fu&&fu<today;
+        return(<div key={j.id} style={{background:"rgba(255,255,255,.02)",border:"1px solid "+(isExp?"rgba(6,182,212,.2)":"rgba(255,255,255,.05)"),borderLeft:"3px solid "+c.c,borderRadius:8,overflow:"hidden",transition:"all .2s"}}>
+          <div onClick={()=>setExpanded(isExp?null:j.id)} style={{display:"grid",gridTemplateColumns:"1fr 140px 72px 130px 78px",gap:9,padding:"10px 13px",cursor:"pointer",alignItems:"center"}}>
+            <div><div style={{fontSize:11,fontWeight:500}}>{j.title}</div><div style={{fontSize:9,color:"var(--muted)",marginTop:2}}>{j.company}{j.location?" · "+j.location:""}</div></div>
+            <div style={{fontSize:9,fontFamily:"var(--mono)",color:"var(--dim)"}}>{j.applied_date||"—"}</div>
+            <div style={{fontSize:10,fontWeight:600,fontFamily:"var(--mono)",color:(j.confidence||0)>=.7?"var(--green)":(j.confidence||0)>=.5?"var(--yellow)":"var(--dim)"}}>{Math.round((j.confidence||0)*100)}%</div>
+            <div>{fu&&<span style={{fontSize:8,padding:"2px 5px",borderRadius:4,background:isPastDue?"rgba(239,68,68,.15)":"rgba(16,185,129,.1)",color:isPastDue?"var(--red)":"var(--green)",border:"1px solid "+(isPastDue?"rgba(239,68,68,.3)":"rgba(16,185,129,.25)"),fontFamily:"var(--mono)"}}>🔔 {fu}</span>}</div>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><span style={{fontSize:8,padding:"2px 6px",borderRadius:4,background:c.c+"20",color:c.c,fontFamily:"var(--mono)"}}>{c.l}</span><span style={{color:"var(--dim)",fontSize:10}}>{isExp?"▲":"▼"}</span></div>
+          </div>
+          {isExp&&<div style={{padding:"0 13px 13px",borderTop:"1px solid rgba(255,255,255,.05)"}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:11}}>
+              <div>
+                <div style={{...sLbl,marginBottom:6}}>Update Status</div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:4}}>{STAGES.map(st=>{const sc=SC2[st];const on=j.status===st;return(<button key={st} onClick={()=>upStatus(j.id,st)} style={{padding:"3px 8px",borderRadius:4,fontSize:9,cursor:"pointer",fontFamily:"var(--mono)",border:"1px solid "+(on?sc.c+"50":"rgba(255,255,255,.07)"),background:on?(sc.c+"20"):"rgba(255,255,255,.02)",color:on?sc.c:"var(--dim)"}}>{sc.l}</button>);})}</div>
+                <div style={{marginTop:9}}><div style={{...sLbl,marginBottom:4}}>Follow-up Date</div><input type="date" value={followUp[j.id]||""} onChange={e=>setFollowUp(p=>({...p,[j.id]:e.target.value}))} style={{padding:"5px 8px",borderRadius:5,border:"1px solid rgba(255,255,255,.1)",background:"rgba(255,255,255,.03)",color:"var(--text)",fontSize:10,outline:"none",fontFamily:"var(--mono)"}}/></div>
+              </div>
+              <div><div style={{...sLbl,marginBottom:4}}>Notes</div><textarea rows={4} value={notes[j.id]||""} onChange={e=>setNotes(p=>({...p,[j.id]:e.target.value}))} placeholder="Interview notes, contacts, follow-up…" style={{width:"100%",padding:8,borderRadius:6,border:"1px solid rgba(255,255,255,.08)",background:"rgba(255,255,255,.03)",color:"var(--text)",fontSize:10,resize:"none",outline:"none",fontFamily:"var(--sans)",lineHeight:1.5,boxSizing:"border-box"}}/></div>
+            </div>
+            <div style={{display:"flex",gap:6,marginTop:9}}>
+              {j.url&&<a href={j.url} target="_blank" rel="noopener noreferrer" style={{...iBtnStyle(true),textDecoration:"none",display:"inline-block"}}>Open Posting →</a>}
+              <button onClick={()=>upStatus(j.id,"applied")} style={{...iBtnStyle(false),borderColor:"rgba(245,158,11,.4)",color:"var(--yellow)"}}>Mark Applied ✓</button>
+            </div>
+          </div>}
+        </div>);
+      })}
+    </div>
+  </div>);
+}
+
+function ResumeTab({api}){
+  const[step,setStep]=useState(0);
+  const[company,setCompany]=useState("");
+  const[role,setRole]=useState("");
+  const[jd,setJd]=useState("");
+  const[blend,setBlend]=useState(null);
+  const[score,setScore]=useState(null);
+  const[summary,setSummary]=useState("");
+  const[loading,setLoading]=useState(false);
+  const[result,setResult]=useState(null);
+  const[err,setErr]=useState("");
+  const STEPS=["Input","Analysis","Preview","Generate"];
+  const analyze=()=>{
+    if(!company.trim()||!role.trim()||!jd.trim())return;
+    const b=scoreArch(jd);setBlend(b);
+    const jdW=new Set(jd.toLowerCase().split(/\W+/));
+    const allK=["python","sql","machine learning","deep learning","nlp","pytorch","tensorflow","aws","gcp","azure","docker","kubernetes","etl","pipeline","analytics","tableau","governance","compliance","llm","rag","embeddings","prompt","fastapi","airflow","dbt","spark"];
+    const hits=allK.filter(k=>jdW.has(k)||jd.toLowerCase().includes(k));
+    setScore(Math.round((0.32+Math.min(hits.length/allK.length*1.1,0.43))*100));
+    const dom=Object.entries(b).sort((a,c)=>c[1]-a[1])[0][0];
+    const bases={AI_ML:"MS Data Analytics Engineering (Northeastern, 4.0 GPA) with 15+ years enterprise technology experience — building LLM evaluation frameworks, multi-agent systems, and production ML pipelines for "+role+" at "+company+".",Data_Engineering:"MS Data Analytics Engineering (Northeastern, 4.0 GPA) with 15+ years enterprise technology experience — specialising in real-time pipelines, cloud-native architectures, and end-to-end data platforms. Targeting "+role+" at "+company+".",Analytics:"MS Data Analytics Engineering (Northeastern, 4.0 GPA) with 15+ years enterprise technology experience — focused on analytics engineering, dashboards, statistical models, and business insights. Seeking "+role+" at "+company+".",Governance_Ethics:"MS Data Analytics Engineering (Northeastern, 4.0 GPA) combining 15+ years enterprise leadership with deep expertise in data governance, AI ethics, and responsible AI frameworks. Targeting "+role+" at "+company+"."};
+    setSummary(bases[dom]||bases.AI_ML);setStep(1);
+  };
+  const generate=async()=>{
+    if(!api){setErr("ARIA API offline — run: source venv/bin/activate && python3 aria_api.py");return;}
+    setLoading(true);setErr("");
+    try{
+      const res=await fetch(API+"/api/generate-resume",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({company,role,jd,score:(score||50)/100,job_id:company.toLowerCase().replace(/\s+/g,"_")+"_"+Date.now()})});
+      const data=await res.json();
+      if(data.error){setErr(data.error);}else{setResult(data);setStep(3);}
+    }catch(e){setErr("Request failed — is ARIA API running?");}
+    setLoading(false);
+  };
+  const dom=blend?Object.entries(blend).sort((a,b)=>b[1]-a[1])[0][0]:null;
+  const domMeta=dom?ARCH_META[dom]:null;
+  const domSkills=dom?SKILLS[dom]:[];
+  return(<div style={{animation:"fadeIn .4s ease both"}}>
+    <div style={{display:"flex",gap:3,marginBottom:20,alignItems:"center"}}>
+      {STEPS.map((l,i)=>(<React.Fragment key={l}><div onClick={()=>i<step&&setStep(i)} style={{padding:"4px 12px",borderRadius:5,fontSize:9,fontFamily:"var(--mono)",cursor:i<step?"pointer":"default",background:i===step?"linear-gradient(135deg,rgba(6,182,212,.25),rgba(139,92,246,.2))":i<step?"rgba(16,185,129,.12)":"rgba(255,255,255,.03)",color:i===step?"var(--cyan)":i<step?"var(--green)":"var(--faint)",border:"1px solid "+(i===step?"rgba(6,182,212,.4)":i<step?"rgba(16,185,129,.3)":"var(--border)")}}>{i<step?"✓ ":""}{l}</div>{i<STEPS.length-1&&<div style={{height:1,width:16,background:"var(--border)"}}/>}</React.Fragment>))}
+    </div>
+    {step===0&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+      <div>
+        <div style={{marginBottom:10}}><label style={{display:"block",fontSize:9,textTransform:"uppercase",letterSpacing:".1em",color:"var(--dim)",marginBottom:3,fontFamily:"var(--mono)"}}>Company</label><input value={company} onChange={e=>setCompany(e.target.value)} placeholder="e.g. Anthropic" style={iInp}/></div>
+        <div style={{marginBottom:10}}><label style={{display:"block",fontSize:9,textTransform:"uppercase",letterSpacing:".1em",color:"var(--dim)",marginBottom:3,fontFamily:"var(--mono)"}}>Role Title</label><input value={role} onChange={e=>setRole(e.target.value)} placeholder="e.g. AI Safety Research Intern" style={iInp}/></div>
+        <div style={{marginBottom:12}}><label style={{display:"block",fontSize:9,textTransform:"uppercase",letterSpacing:".1em",color:"var(--dim)",marginBottom:3,fontFamily:"var(--mono)"}}>Job Description</label><textarea value={jd} onChange={e=>setJd(e.target.value)} placeholder="Paste full job description here…" rows={10} style={{...iInp,resize:"vertical",lineHeight:1.6}}/></div>
+        <button onClick={analyze} disabled={!company.trim()||!role.trim()||!jd.trim()} style={{...iBtnStyle(true),width:"100%",padding:10,fontSize:12,opacity:(!company.trim()||!role.trim()||!jd.trim())?0.4:1}}>⚡ ANALYZE JOB DESCRIPTION →</button>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:11}}>
+        <div style={iCard}><div style={sLbl}>Candidate Profile</div>{[["Name","Rosalina Torres"],["Program","MS Data Analytics Engineering"],["GPA","4.0 · Northeastern"],["Graduating","May 2026"],["Experience","15+ years enterprise tech"],["Languages","EN · ES · PT"]].map(([l,v])=><div key={l} style={{display:"flex",justifyContent:"space-between",marginBottom:4,fontSize:10}}><span style={{color:"var(--faint)"}}>{l}</span><span style={{color:"var(--muted)"}}>{v}</span></div>)}</div>
+        <div style={iCard}><div style={sLbl}>Archetypes</div>{Object.entries(ARCH_META).map(([k,v])=><div key={k} style={{display:"flex",alignItems:"center",gap:6,marginBottom:5}}><div style={{width:6,height:6,borderRadius:2,background:v.color}}/><span style={{color:v.color,fontSize:10,fontFamily:"var(--mono)"}}>{v.label}</span></div>)}</div>
+        <div style={{padding:"9px 13px",background:"rgba(6,182,212,.05)",border:"1px solid rgba(6,182,212,.15)",borderRadius:6,fontSize:9,color:"var(--muted)",fontFamily:"var(--mono)",lineHeight:1.9}}>API: {api?<span style={{color:"var(--green)"}}>● LIVE — /api/generate-resume ready</span>:<span style={{color:"var(--red)"}}>○ OFFLINE</span>}</div>
+      </div>
+    </div>}
+    {step===1&&blend&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+      <div>
+        <div style={{...iCard,marginBottom:11}}><div style={sLbl}>Semantic Match Score</div><div style={{textAlign:"center",padding:"12px 0"}}><div style={{fontSize:54,fontWeight:700,color:score>=45?"var(--green)":score>=32?"var(--yellow)":"var(--red)",fontFamily:"var(--display)",lineHeight:1}}>{score}<span style={{fontSize:20}}>%</span></div><div style={{color:"var(--muted)",fontSize:9,marginTop:3,fontFamily:"var(--mono)"}}>{score>=45?"🔥 HIGH MATCH":score>=32?"⚡ MODERATE":"⚪ BELOW THRESHOLD"}</div><div style={{color:"var(--faint)",fontSize:8,marginTop:2}}>{company} · {role}</div></div></div>
+        <div style={iCard}><div style={sLbl}>Summary (editable)</div><textarea value={summary} onChange={e=>setSummary(e.target.value)} rows={5} style={{...iInp,resize:"vertical",lineHeight:1.6,fontSize:11}}/><div style={{fontSize:8,color:"var(--faint)",marginTop:3,fontFamily:"var(--mono)"}}>✏️ Edit before generating</div></div>
+      </div>
+      <div>
+        <div style={{...iCard,marginBottom:11}}><div style={sLbl}>Archetype Blend</div>
+          {Object.entries(blend).sort((a,b)=>b[1]-a[1]).map(([a,p])=>{const m=ARCH_META[a];return(<div key={a} style={{marginBottom:11}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{color:m.color,fontSize:10,fontFamily:"var(--mono)"}}>{m.label}</span><span style={{color:m.color,fontWeight:700,fontSize:10,fontFamily:"var(--mono)"}}>{Math.round(p*100)}%</span></div><div style={{height:5,borderRadius:2,background:"rgba(255,255,255,.06)"}}><div style={{height:"100%",width:(p*100)+"%",borderRadius:2,background:m.color,transition:"width .8s"}}/></div></div>);})}
+          {domMeta&&<div style={{marginTop:11,padding:"8px 11px",background:domMeta.bg,border:"1px solid "+domMeta.color+"40",borderRadius:6}}><div style={{color:domMeta.color,fontSize:8,fontWeight:700,fontFamily:"var(--mono)"}}>DOMINANT ARCHETYPE</div><div style={{color:domMeta.color,fontSize:13,fontWeight:700,marginTop:2}}>{domMeta.label}</div></div>}
+        </div>
+        <div style={{display:"flex",gap:7}}><button onClick={()=>setStep(0)} style={{...iBtnStyle(false),flex:1}}>← Back</button><button onClick={()=>setStep(2)} style={{...iBtnStyle(true),flex:2}}>PREVIEW RESUME →</button></div>
+      </div>
+    </div>}
+    {step===2&&<div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+        <span style={{color:"var(--cyan)",fontWeight:700,fontFamily:"var(--mono)",fontSize:11}}>RESUME PREVIEW — {domMeta&&domMeta.label}</span>
+        <div style={{display:"flex",gap:6}}><button onClick={()=>setStep(1)} style={iBtnStyle(false)}>← Edit</button><button onClick={generate} disabled={loading} style={{...iBtnStyle(true),background:"linear-gradient(135deg,rgba(16,185,129,.25),rgba(6,182,212,.15))",borderColor:"rgba(16,185,129,.4)",color:"var(--green)",opacity:loading?0.6:1}}>{loading?"⏳ Generating…":"✅ APPROVE & GENERATE .DOCX →"}</button></div>
+      </div>
+      {err&&<div style={{padding:"6px 11px",background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.3)",borderRadius:5,color:"var(--red)",fontSize:9,fontFamily:"var(--mono)",marginBottom:9}}>{err}</div>}
+      <div style={{background:"#fff",color:"#1a1a1a",borderRadius:6,overflow:"hidden",boxShadow:"0 8px 32px rgba(0,0,0,.5)",fontFamily:"Arial,sans-serif"}}>
+        <div style={{height:6,background:"linear-gradient(90deg,#1e3a8a,#3b82f6)"}}/>
+        <div style={{padding:"13px 18px 9px",textAlign:"center",borderBottom:"1px solid #e2e8f0"}}>
+          <div style={{fontSize:20,fontWeight:700,color:"#1B3A6B",letterSpacing:".05em"}}>ROSALINA TORRES</div>
+          <div style={{fontSize:9,color:"#555",marginTop:2}}>Data Analytics Engineering  |  AI/ML Systems  |  Responsible AI</div>
+          <div style={{height:1,background:"#1B3A6B",margin:"5px 0 4px"}}/>
+          <div style={{fontSize:8,color:"#555"}}><b style={{color:"#1B3A6B",textTransform:"uppercase",fontSize:7}}>LinkedIn</b> linkedin.com/in/rosalina2 <span style={{color:"#7EB8D4",margin:"0 5px"}}>·</span> <b style={{color:"#1B3A6B",textTransform:"uppercase",fontSize:7}}>Portfolio</b> rosalina.sites.northeastern.edu <span style={{color:"#7EB8D4",margin:"0 5px"}}>·</span> <b style={{color:"#1B3A6B",textTransform:"uppercase",fontSize:7}}>GitHub</b> github.com/rosalinatorres888 <span style={{color:"#7EB8D4",margin:"0 5px"}}>·</span> <b style={{color:"#1B3A6B",textTransform:"uppercase",fontSize:7}}>Email</b> torres.ros@northeastern.edu <span style={{color:"#7EB8D4",margin:"0 5px"}}>·</span> Boston, MA</div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"145px 1fr"}}>
+          <div style={{background:"#1E2A3A",padding:"10px 8px"}}>
+            <div style={{color:"#7EB8D4",fontSize:7,fontWeight:700,borderBottom:"1px solid #2a4060",paddingBottom:2,marginBottom:4,letterSpacing:".1em"}}>EDUCATION</div>
+            {["MS Data Analytics Engineering","Northeastern University","Boston, MA · May 2026","BS in Economics","Bridgewater State · 2010"].map((t,i)=><div key={i} style={{fontSize:7,color:i===0||i===3?"#E8EDF2":"#9BAFC0",fontWeight:i===0||i===3?700:400,marginBottom:1.5}}>{t}</div>)}
+            <div style={{color:"#7EB8D4",fontSize:7,fontWeight:700,borderBottom:"1px solid #2a4060",paddingBottom:2,marginBottom:4,marginTop:8,letterSpacing:".1em"}}>SKILLS</div>
+            {domSkills.slice(0,11).map(s=><div key={s} style={{fontSize:7,color:"#E8EDF2",marginBottom:1.5}}>• {s}</div>)}
+            <div style={{color:"#7EB8D4",fontSize:7,fontWeight:700,borderBottom:"1px solid #2a4060",paddingBottom:2,marginBottom:4,marginTop:7,letterSpacing:".1em"}}>LANGUAGES</div>
+            {["English — Native","Spanish — Native","Portuguese — Professional"].map(l=><div key={l} style={{fontSize:7,color:"#E8EDF2",marginBottom:1.5}}>{l}</div>)}
+          </div>
+          <div style={{padding:"10px 12px"}}>
+            <div style={{color:"#1B3A6B",fontSize:7.5,fontWeight:700,borderBottom:"1px solid #1B3A6B",paddingBottom:1.5,marginBottom:5,letterSpacing:".07em"}}>SUMMARY</div>
+            <p style={{fontSize:7,lineHeight:1.7,color:"#1A1A1A",margin:"0 0 9px"}}>{summary}</p>
+            <div style={{color:"#1B3A6B",fontSize:7.5,fontWeight:700,borderBottom:"1px solid #1B3A6B",paddingBottom:1.5,marginBottom:5,letterSpacing:".07em"}}>KEY TECHNICAL PROJECTS</div>
+            {[["Multi-Model LLM Evaluation Framework","github.com/rosalinatorres888/multi-model-prompt-engineering"],["Multi-Agent LLM Router & ARIA","github.com/rosalinatorres888"],["Career Intelligence System","github.com/rosalinatorres888"]].map(([t,gh])=><div key={t} style={{marginBottom:6}}><div style={{fontSize:7,fontWeight:700,color:"#1B3A6B"}}>{t} <span style={{color:"#2E75B6",fontWeight:400}}>· {gh}</span></div></div>)}
+            <div style={{color:"#1B3A6B",fontSize:7.5,fontWeight:700,borderBottom:"1px solid #1B3A6B",paddingBottom:1.5,marginBottom:5,letterSpacing:".07em"}}>PROFESSIONAL EXPERIENCE</div>
+            {[["AI Data Trainer, Bilingual","Alignerr (by Labelbox)","2023–Present","Remote"],["Regional Manager LATAM","Collibra","2021–2023","Remote"],["Regional Sales Manager","Zerto (HPE)","2019–2021","Remote"]].map(([t,co,d,l])=>(
+              <div key={t} style={{marginBottom:6}}><div style={{display:"flex",justifyContent:"space-between",borderBottom:"1px solid #2E75B6",paddingBottom:1.5,marginBottom:2}}><div style={{fontSize:7}}><span style={{fontWeight:700,color:"#1B3A6B"}}>{t}</span><span style={{color:"#7EB8D4",margin:"0 2px"}}>|</span><span style={{color:"#2E75B6"}}>{co}</span><span style={{color:"#7EB8D4",margin:"0 2px"}}>|</span><span style={{color:"#555",fontStyle:"italic"}}>{d}</span></div><span style={{fontSize:6.5,color:"#555",fontStyle:"italic"}}>{l}</span></div></div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div style={{marginTop:7,padding:"6px 11px",background:"rgba(6,182,212,.05)",border:"1px solid rgba(6,182,212,.15)",borderRadius:5,color:"var(--muted)",fontSize:8,fontFamily:"var(--mono)"}}>ℹ️ Scaled preview — .docx renders at full A4 with exact fellowship colors and layout.</div>
+    </div>}
+    {step===3&&result&&<div style={{maxWidth:500,margin:"32px auto",textAlign:"center"}}>
+      <div style={{fontSize:40,marginBottom:11}}>✅</div>
+      <div style={{color:"var(--green)",fontSize:17,fontWeight:700,fontFamily:"var(--display)",marginBottom:4}}>Resume Generated!</div>
+      <div style={{color:"var(--muted)",fontSize:10,fontFamily:"var(--mono)",marginBottom:18}}>{result.company} · {result.role}</div>
+      <div style={{...iCard,textAlign:"left",marginBottom:16}}><div style={sLbl}>File Output</div><div style={{fontFamily:"var(--mono)",fontSize:9,lineHeight:1.9}}><div style={{color:"var(--faint)"}}>📁 ~/Documents/memory-brain-integration/resumes/</div><div style={{color:"var(--green)",marginTop:3}}>✓ {result.filename}</div></div></div>
+      <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+        <button onClick={()=>{setStep(0);setCompany("");setRole("");setJd("");setBlend(null);setScore(null);setSummary("");setResult(null);setErr("");}} style={iBtnStyle(true)}>⚡ New Resume</button>
+        <button onClick={()=>setStep(2)} style={iBtnStyle(false)}>← View Preview</button>
+      </div>
+    </div>}
+  </div>);
+}
+
+function CoverLetterTab(){
+  const[company,setCompany]=useState("");
+  const[role,setRole]=useState("");
+  const[hiringMgr,setHiringMgr]=useState("");
+  const[jd,setJd]=useState("");
+  const[tone,setTone]=useState("professional");
+  const[body,setBody]=useState("");
+  const[loading,setLoading]=useState(false);
+  const[step,setStep]=useState(0);
+  const today=new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
+  const TONES={professional:"Formal, executive, precise",technical:"ML/AI technical depth, data-forward",storytelling:"Career-transition narrative, human voice",concise:"3 paragraphs, impact-first"};
+  const generate=async()=>{
+    if(!company||!role||!jd)return;
+    setLoading(true);
+    try{
+      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:"You write exceptional cover letters. Return ONLY 3-4 body paragraphs — no salutation, no sign-off, no subject line. Tone: "+TONES[tone]+". Candidate: Rosalina Torres, MS Data Analytics Engineering (Northeastern, 4.0 GPA), 15+ years enterprise tech (Oracle, Collibra, Zerto), now in ML/AI. Key projects: multi-agent LLM systems, LLM evaluation framework, career intelligence system 92% semantic accuracy. Bilingual EN/ES. Write as Rosalina in first person.",messages:[{role:"user",content:"Write cover letter body for "+role+" at "+company+".\n\nJob description:\n"+jd.slice(0,1200)+"\n\nHighlight most relevant experience and 1-2 projects. End with a clear call to action."}]})});
+      const data=await res.json();
+      setBody(((data.content||[]).map(b=>b.text||"").join("")).trim());
+      setStep(1);
+    }catch(e){setBody("API error — check connection.");setStep(1);}
+    setLoading(false);
+  };
+  const printLetter=()=>{
+    const w=window.open("","_blank");
+    const pH=body.split("\n\n").filter(p=>p.trim()).map(p=>"<p style='margin-bottom:1.4rem'>"+p+"</p>").join("");
+    w.document.write("<!DOCTYPE html><html><head><title>Cover Letter - "+company+"</title><link href='https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;500&display=swap' rel='stylesheet'><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#f3f4f6;padding:2rem;display:flex;justify-content:center;font-family:Inter,system-ui,sans-serif}.page{background:white;width:210mm;min-height:297mm;box-shadow:0 10px 25px rgba(0,0,0,.1);position:relative;padding:38mm 24mm 28mm;box-sizing:border-box}.page::before{content:'';position:absolute;top:0;left:0;right:0;height:8px;background:linear-gradient(90deg,#1e3a8a,#3b82f6);-webkit-print-color-adjust:exact;print-color-adjust:exact}@media print{body{background:white;padding:0}.page{box-shadow:none;width:100%;padding:25mm!important}}</style></head><body><div class='page'><header style='display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #e2e8f0;padding-bottom:1.8rem;margin-bottom:2.2rem'><h1 style='font-family:Playfair Display,serif;font-size:2.1rem;color:#0f172a'>Rosalina Torres</h1><div style='text-align:right;font-size:.85rem;color:#475569;line-height:1.9'><div>torres.ros@northeastern.edu</div><div>+1 (774) 339-2255</div><div>rosalina.sites.northeastern.edu</div><div style='color:#94a3b8'>Boston, MA 02128</div></div></header><main style='color:#334155;line-height:1.8;font-size:.97rem'><p style='color:#94a3b8;margin-bottom:1.4rem'>"+today+"</p><div style='margin-bottom:1.4rem;color:#1e293b'>"+(hiringMgr?"<p style='font-weight:500'>"+hiringMgr+"</p>":"")+"<p>"+role+"</p><p style='font-weight:600;color:#1e3a8a'>"+company+"</p></div><p style='margin-bottom:1.4rem'>Dear "+(hiringMgr||"Hiring Manager")+",</p>"+pH+"<p>Sincerely,</p><div style='padding:2.2rem 0 .6rem'></div><p style='font-weight:600;color:#0f172a'>Rosalina Torres</p></main><footer style='margin-top:2.5rem;padding-top:1.2rem;border-top:1px solid #f1f5f9;text-align:center;font-size:.72rem;color:#94a3b8'>Rosalina Torres &bull; torres.ros@northeastern.edu &bull; Boston, MA</footer></div><scri"+"pt>setTimeout(function(){window.print()},500);</scri"+"pt></body></html>");
+    w.document.close();
+  };
+  return(<div style={{animation:"fadeIn .4s ease both"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      <div style={{color:"var(--cyan)",fontWeight:700,fontFamily:"var(--mono)",fontSize:13}}>✉ COVER LETTER GENERATOR</div>
+      {step===1&&<div style={{display:"flex",gap:6}}><button onClick={()=>setStep(0)} style={iBtnStyle(false)}>← Edit</button><button onClick={printLetter} style={{...iBtnStyle(true),background:"linear-gradient(135deg,rgba(16,185,129,.25),rgba(6,182,212,.15))",borderColor:"rgba(16,185,129,.4)",color:"var(--green)"}}>🖨 Print / Save PDF</button></div>}
+    </div>
+    {step===0&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+      <div>
+        <div style={{marginBottom:10}}><label style={{display:"block",fontSize:9,textTransform:"uppercase",letterSpacing:".1em",color:"var(--dim)",marginBottom:3,fontFamily:"var(--mono)"}}>Company</label><input value={company} onChange={e=>setCompany(e.target.value)} placeholder="e.g. Anthropic" style={iInp}/></div>
+        <div style={{marginBottom:10}}><label style={{display:"block",fontSize:9,textTransform:"uppercase",letterSpacing:".1em",color:"var(--dim)",marginBottom:3,fontFamily:"var(--mono)"}}>Role Title</label><input value={role} onChange={e=>setRole(e.target.value)} placeholder="e.g. AI Safety Research Intern" style={iInp}/></div>
+        <div style={{marginBottom:10}}><label style={{display:"block",fontSize:9,textTransform:"uppercase",letterSpacing:".1em",color:"var(--dim)",marginBottom:3,fontFamily:"var(--mono)"}}>Hiring Manager (optional)</label><input value={hiringMgr} onChange={e=>setHiringMgr(e.target.value)} placeholder="e.g. Dr. Jane Smith" style={iInp}/></div>
+        <div style={{marginBottom:12}}><label style={{display:"block",fontSize:9,textTransform:"uppercase",letterSpacing:".1em",color:"var(--dim)",marginBottom:3,fontFamily:"var(--mono)"}}>Job Description</label><textarea value={jd} onChange={e=>setJd(e.target.value)} placeholder="Paste the full job description…" rows={8} style={{...iInp,resize:"vertical",lineHeight:1.6}}/></div>
+        <button onClick={generate} disabled={!company||!role||!jd||loading} style={{...iBtnStyle(true),width:"100%",padding:10,fontSize:12,opacity:(!company||!role||!jd)?0.4:1}}>{loading?"⏳ Generating…":"✉ GENERATE COVER LETTER →"}</button>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:11}}>
+        <div style={iCard}><div style={sLbl}>Tone / Style</div>
+          {Object.entries(TONES).map(([k,v])=><div key={k} onClick={()=>setTone(k)} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"8px 10px",borderRadius:6,cursor:"pointer",marginBottom:4,border:"1px solid "+(tone===k?"rgba(6,182,212,.4)":"rgba(255,255,255,.05)"),background:tone===k?"rgba(6,182,212,.08)":"transparent",transition:"all .15s"}}>
+            <div style={{width:12,height:12,borderRadius:"50%",border:"2px solid "+(tone===k?"var(--cyan)":"var(--faint)"),background:tone===k?"var(--cyan)":"transparent",marginTop:1,flexShrink:0}}/>
+            <div><div style={{fontSize:10,color:tone===k?"var(--cyan)":"var(--text)",fontWeight:tone===k?600:400,textTransform:"capitalize"}}>{k}</div><div style={{fontSize:8,color:"var(--faint)",marginTop:1}}>{v}</div></div>
+          </div>)}
+        </div>
+        <div style={{padding:"9px 13px",background:"rgba(6,182,212,.05)",border:"1px solid rgba(6,182,212,.15)",borderRadius:6,fontSize:9,color:"var(--muted)",fontFamily:"var(--mono)",lineHeight:1.9}}>Generates print-ready stationery PDF<br/>matching your personal brand letterhead</div>
+      </div>
+    </div>}
+    {step===1&&<div>
+      <div style={{background:"white",borderRadius:6,overflow:"hidden",boxShadow:"0 8px 32px rgba(0,0,0,.5)",fontFamily:"Inter,system-ui,sans-serif"}}>
+        <div style={{height:7,background:"linear-gradient(90deg,#1e3a8a,#3b82f6)"}}/>
+        <div style={{padding:"24px 28px 20px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",borderBottom:"1px solid #e2e8f0",paddingBottom:16,marginBottom:18}}>
+            <div style={{fontFamily:"Georgia,serif",fontSize:22,fontWeight:700,color:"#0f172a"}}>Rosalina Torres</div>
+            <div style={{textAlign:"right",fontSize:9,color:"#475569",lineHeight:1.9}}><div>torres.ros@northeastern.edu</div><div>+1 (774) 339-2255</div><div>rosalina.sites.northeastern.edu</div><div style={{color:"#94a3b8"}}>Boston, MA 02128</div></div>
+          </div>
+          <div style={{color:"#334155",lineHeight:1.8,fontSize:11}}>
+            <p style={{color:"#94a3b8",marginBottom:12}}>{today}</p>
+            <div style={{marginBottom:12}}>{hiringMgr&&<p style={{fontWeight:500,color:"#1e293b"}}>{hiringMgr}</p>}<p style={{color:"#334155"}}>{role}</p><p style={{fontWeight:600,color:"#1e3a8a"}}>{company}</p></div>
+            <p style={{marginBottom:12}}>Dear {hiringMgr||"Hiring Manager"},</p>
+            {body.split("\n\n").filter(p=>p.trim()).map((p,i)=><p key={i} style={{marginBottom:12}}>{p}</p>)}
+            <p>Sincerely,</p>
+            <div style={{padding:"20px 0 5px"}}/>
+            <p style={{fontWeight:600,color:"#0f172a"}}>Rosalina Torres</p>
+          </div>
+        </div>
+        <div style={{borderTop:"1px solid #f1f5f9",padding:"9px 28px",textAlign:"center",fontSize:9,color:"#94a3b8"}}>Rosalina Torres &bull; torres.ros@northeastern.edu &bull; Boston, MA</div>
+      </div>
+      <div style={{marginTop:11}}><div style={{...sLbl,marginBottom:4}}>Edit Letter Body</div><textarea value={body} onChange={e=>setBody(e.target.value)} rows={10} style={{...iInp,resize:"vertical",lineHeight:1.7,fontSize:11}}/></div>
+    </div>}
+  </div>);
+}
+
+ReactDOM.render(<App/>,document.getElementById("app"));
+</script>
+</body>
+</html>

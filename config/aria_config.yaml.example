@@ -1,0 +1,18 @@
+# ARIA Config Template — copy to aria_config.yaml and fill in your keys
+# NEVER commit aria_config.yaml (it is in .gitignore)
+
+openai:
+  api_key: "sk-proj-YOUR_OPENAI_KEY_HERE"
+
+anthropic:
+  api_key: "sk-ant-YOUR_ANTHROPIC_KEY_HERE"
+
+email:
+  smtp_server: smtp.gmail.com
+  port: 587
+  username: your@gmail.com
+  password: "xxxx xxxx xxxx xxxx"  # Gmail app-specific password
+
+redis:
+  host: localhost
+  port: 6379

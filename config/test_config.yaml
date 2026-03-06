@@ -1,0 +1,38 @@
+# ARIA Configuration for Testing
+# Start with minimal configuration for testing
+
+database:
+  connection_string: "sqlite:///aria_test.db"  # SQLite for testing
+
+redis:
+  host: localhost
+  port: 6379
+
+email:
+  smtp_server: smtp.gmail.com
+  port: 587
+  username: your_email@gmail.com
+  password: your_app_password
+  from_address: your_email@gmail.com
+  to_address: your_email@gmail.com
+
+# Add your API keys here
+openai:
+  api_key: ${OPENAI_API_KEY}  # Will read from environment
+
+anthropic:
+  api_key: ${ANTHROPIC_API_KEY}  # Will read from environment
+
+# Optional services (comment out if not using)
+# twilio:
+#   account_sid: your_account_sid
+#   auth_token: your_auth_token
+
+slack:
+  bot_token: xoxb-your-token
+  channel: "#career-updates"
+
+monitoring:
+  health_check_interval: 60
+  alert_cooldown: 300
+  max_retries: 3
