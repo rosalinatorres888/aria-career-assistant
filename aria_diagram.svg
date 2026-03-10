@@ -1,0 +1,419 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1020" width="900" height="1020" font-family="'Courier New', monospace">
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f0f4f8"/>
+      <stop offset="100%" style="stop-color:#e8eef5"/>
+    </linearGradient>
+
+    <!-- Neon gradients -->
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0099bb"/>
+      <stop offset="100%" style="stop-color:#00c4e8"/>
+    </linearGradient>
+    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c3aed"/>
+      <stop offset="100%" style="stop-color:#a855f7"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#059669"/>
+      <stop offset="100%" style="stop-color:#10b981"/>
+    </linearGradient>
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#d97706"/>
+      <stop offset="100%" style="stop-color:#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="titleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0099bb"/>
+      <stop offset="100%" style="stop-color:#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="connectorGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c3aed;stop-opacity:0.8"/>
+      <stop offset="100%" style="stop-color:#0099bb;stop-opacity:0.4"/>
+    </linearGradient>
+
+    <!-- Card drop shadows -->
+    <filter id="cardShadow" x="-5%" y="-5%" width="110%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0099bb" flood-opacity="0.12"/>
+    </filter>
+    <filter id="glowCyan" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#0099bb" flood-opacity="0.4"/>
+    </filter>
+    <filter id="glowPurple" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#7c3aed" flood-opacity="0.4"/>
+    </filter>
+    <filter id="glowGreen" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#059669" flood-opacity="0.4"/>
+    </filter>
+    <filter id="glowAmber" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#d97706" flood-opacity="0.35"/>
+    </filter>
+    <filter id="textGlow">
+      <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#0099bb" flood-opacity="0.5"/>
+    </filter>
+
+    <!-- Animated flow marker -->
+    <marker id="arrowCyan" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#0099bb"/>
+    </marker>
+    <marker id="arrowPurple" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#7c3aed"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#059669"/>
+    </marker>
+
+    <style>
+      /* Card hover pulse animations — staggered per stage */
+      .stage-1 { animation: fadeSlideIn 0.5s ease 0.1s both; }
+      .stage-2 { animation: fadeSlideIn 0.5s ease 0.25s both; }
+      .stage-3 { animation: fadeSlideIn 0.5s ease 0.4s both; }
+      .stage-4 { animation: fadeSlideIn 0.5s ease 0.55s both; }
+      .stage-5 { animation: fadeSlideIn 0.5s ease 0.7s both; }
+      .stage-6 { animation: fadeSlideIn 0.5s ease 0.85s both; }
+      .stage-7 { animation: fadeSlideIn 0.5s ease 1.0s both; }
+      .source-1 { animation: fadeDown 0.5s ease 0.05s both; }
+      .source-2 { animation: fadeDown 0.5s ease 0.15s both; }
+      .source-3 { animation: fadeDown 0.5s ease 0.25s both; }
+      .left-1  { animation: fadeRight 0.6s ease 0.5s both; }
+      .left-2  { animation: fadeRight 0.6s ease 0.65s both; }
+      .right-1 { animation: fadeLeft 0.6s ease 0.5s both; }
+      .right-2 { animation: fadeLeft 0.6s ease 0.65s both; }
+      .right-3 { animation: fadeLeft 0.6s ease 0.8s both; }
+      .title-group { animation: fadeDown 0.7s ease 0s both; }
+      .formula-box { animation: fadeUp 0.6s ease 1.1s both; }
+      .stats-row { animation: fadeUp 0.6s ease 1.25s both; }
+
+      /* Flow line animation */
+      .flow-line {
+        stroke-dasharray: 6 4;
+        animation: flowDash 1.2s linear infinite;
+      }
+      .flow-line-slow {
+        stroke-dasharray: 6 4;
+        animation: flowDash 2s linear infinite;
+      }
+      .connector-pulse {
+        stroke-dasharray: 4 3;
+        animation: flowDash 0.9s linear infinite;
+      }
+
+      @keyframes flowDash {
+        from { stroke-dashoffset: 20; }
+        to   { stroke-dashoffset: 0; }
+      }
+      @keyframes fadeSlideIn {
+        from { opacity: 0; transform: translateX(16px); }
+        to   { opacity: 1; transform: translateX(0); }
+      }
+      @keyframes fadeDown {
+        from { opacity: 0; transform: translateY(-12px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes fadeRight {
+        from { opacity: 0; transform: translateX(-16px); }
+        to   { opacity: 1; transform: translateX(0); }
+      }
+      @keyframes fadeLeft {
+        from { opacity: 0; transform: translateX(16px); }
+        to   { opacity: 1; transform: translateX(0); }
+      }
+      @keyframes livePulse {
+        0%, 100% { opacity: 1; r: 4; }
+        50%       { opacity: 0.4; r: 3; }
+      }
+      @keyframes badgePulse {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0.6; }
+      }
+
+      .live-dot { animation: livePulse 2s ease infinite; }
+      .live-badge-text { animation: badgePulse 2s ease infinite; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="1020" fill="url(#bgGrad)" rx="16"/>
+
+  <!-- Subtle grid texture -->
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#cbd5e1" stroke-width="0.4" opacity="0.5"/>
+  </pattern>
+  <rect width="900" height="1020" fill="url(#grid)" rx="16" opacity="0.4"/>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- HEADER -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g class="title-group">
+    <!-- Live badge -->
+    <rect x="360" y="18" width="180" height="24" rx="12" fill="none" stroke="#059669" stroke-width="1.2" opacity="0.6"/>
+    <circle cx="378" cy="30" r="4" fill="#059669" class="live-dot"/>
+    <text x="390" y="35" font-size="9" fill="#059669" font-weight="700" letter-spacing="2.5" class="live-badge-text">PRODUCTION SYSTEM</text>
+
+    <!-- ARIA title -->
+    <text x="450" y="82" text-anchor="middle" font-size="54" font-weight="900" fill="url(#titleGrad)" letter-spacing="8" filter="url(#textGlow)">ARIA</text>
+    <text x="450" y="100" text-anchor="middle" font-size="10" fill="#64748b" letter-spacing="2">AUTONOMOUS CAREER INTELLIGENCE SYSTEM  ·  localhost:5100</text>
+    <text x="450" y="116" text-anchor="middle" font-size="9" fill="#94a3b8" letter-spacing="1.5">SYSTEM ARCHITECTURE</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SOURCES ROW -->
+  <!-- ═══════════════════════════════════════════ -->
+
+  <!-- Source 1: Built In Boston -->
+  <g class="source-1" filter="url(#cardShadow)">
+    <rect x="100" y="135" width="155" height="64" rx="8" fill="white" stroke="#0099bb" stroke-width="1.5"/>
+    <rect x="100" y="135" width="155" height="4" rx="2" fill="url(#cyanGrad)"/>
+    <text x="128" y="160" font-size="18">🔍</text>
+    <text x="152" y="158" font-size="11" font-weight="700" fill="#0f172a">Built In Boston</text>
+    <text x="152" y="172" font-size="9" fill="#64748b">async scraper</text>
+  </g>
+
+  <!-- Source 2: MongoDB -->
+  <g class="source-2" filter="url(#cardShadow)">
+    <rect x="372" y="135" width="155" height="64" rx="8" fill="white" stroke="#7c3aed" stroke-width="1.5"/>
+    <rect x="372" y="135" width="155" height="4" rx="2" fill="url(#purpleGrad)"/>
+    <text x="400" y="160" font-size="18">🗄️</text>
+    <text x="424" y="158" font-size="11" font-weight="700" fill="#0f172a">MongoDB Cache</text>
+    <text x="424" y="172" font-size="9" fill="#64748b">aria_career db · 147+ jobs</text>
+  </g>
+
+  <!-- Source 3: Gmail -->
+  <g class="source-3" filter="url(#cardShadow)">
+    <rect x="644" y="135" width="155" height="64" rx="8" fill="white" stroke="#0099bb" stroke-width="1.5"/>
+    <rect x="644" y="135" width="155" height="4" rx="2" fill="url(#cyanGrad)"/>
+    <text x="672" y="160" font-size="18">📧</text>
+    <text x="696" y="158" font-size="11" font-weight="700" fill="#0f172a">Gmail IMAP</text>
+    <text x="696" y="172" font-size="9" fill="#64748b">job alert emails</text>
+  </g>
+
+  <!-- Source → Pipeline connectors (animated) -->
+  <line x1="177" y1="199" x2="380" y2="240" stroke="#0099bb" stroke-width="1.5" fill="none" marker-end="url(#arrowCyan)" class="flow-line" opacity="0.7"/>
+  <line x1="449" y1="199" x2="449" y2="240" stroke="#7c3aed" stroke-width="1.5" fill="none" marker-end="url(#arrowPurple)" class="flow-line" opacity="0.7"/>
+  <line x1="721" y1="199" x2="518" y2="240" stroke="#0099bb" stroke-width="1.5" fill="none" marker-end="url(#arrowCyan)" class="flow-line" opacity="0.7"/>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- ROSE OS LABEL -->
+  <!-- ═══════════════════════════════════════════ -->
+  <text x="449" y="232" text-anchor="middle" font-size="8.5" fill="#94a3b8" letter-spacing="2.5">⚙  ROSE OS ORCHESTRATOR — 7-STAGE DAILY PIPELINE</text>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- PIPELINE STAGES (center column) -->
+  <!-- ═══════════════════════════════════════════ -->
+
+  <!-- Stage 1 -->
+  <g class="stage-1" filter="url(#cardShadow)">
+    <rect x="280" y="244" width="340" height="52" rx="8" fill="white" stroke="#0099bb" stroke-width="1.5"/>
+    <circle cx="308" cy="270" r="13" fill="url(#cyanGrad)" filter="url(#glowCyan)"/>
+    <text x="308" y="275" text-anchor="middle" font-size="11" font-weight="700" fill="white">1</text>
+    <text x="330" y="266" font-size="12" font-weight="700" fill="#0f172a">ARIA Scrape</text>
+    <text x="330" y="280" font-size="9" fill="#64748b">OpportunityScanner.scan_all()  ·  5 sources</text>
+    <text x="590" y="273" font-size="14" text-anchor="middle">🔄</text>
+  </g>
+
+  <!-- Connector 1→2 -->
+  <line x1="449" y1="296" x2="449" y2="310" stroke="url(#connectorGrad)" stroke-width="1.5" class="connector-pulse"/>
+
+  <!-- Stage 2 -->
+  <g class="stage-2" filter="url(#cardShadow)">
+    <rect x="280" y="310" width="340" height="52" rx="8" fill="white" stroke="#0099bb" stroke-width="1.5"/>
+    <circle cx="308" cy="336" r="13" fill="url(#cyanGrad)" filter="url(#glowCyan)"/>
+    <text x="308" y="341" text-anchor="middle" font-size="11" font-weight="700" fill="white">2</text>
+    <text x="330" y="332" font-size="12" font-weight="700" fill="#0f172a">Bridge Normalize</text>
+    <text x="330" y="346" font-size="9" fill="#64748b">aria_to_pod_bridge.py  ·  schema normalization</text>
+    <text x="590" y="339" font-size="14" text-anchor="middle">🔀</text>
+  </g>
+
+  <!-- Connector 2→3 -->
+  <line x1="449" y1="362" x2="449" y2="376" stroke="url(#connectorGrad)" stroke-width="1.5" class="connector-pulse"/>
+
+  <!-- Stage 3 — purple (ML) -->
+  <g class="stage-3" filter="url(#cardShadow)">
+    <rect x="280" y="376" width="340" height="52" rx="8" fill="white" stroke="#7c3aed" stroke-width="1.5"/>
+    <circle cx="308" cy="402" r="13" fill="url(#purpleGrad)" filter="url(#glowPurple)"/>
+    <text x="308" y="407" text-anchor="middle" font-size="11" font-weight="700" fill="white">3</text>
+    <text x="330" y="398" font-size="12" font-weight="700" fill="#0f172a">Semantic Scoring</text>
+    <text x="330" y="412" font-size="9" fill="#64748b">all-MiniLM-L6-v2  ·  55 skills  ·  cosine similarity</text>
+    <text x="590" y="405" font-size="14" text-anchor="middle">🧠</text>
+  </g>
+
+  <!-- Connector 3→4 -->
+  <line x1="449" y1="428" x2="449" y2="442" stroke="url(#connectorGrad)" stroke-width="1.5" class="connector-pulse"/>
+
+  <!-- Stage 4 — purple -->
+  <g class="stage-4" filter="url(#cardShadow)">
+    <rect x="280" y="442" width="340" height="52" rx="8" fill="white" stroke="#7c3aed" stroke-width="1.5"/>
+    <circle cx="308" cy="468" r="13" fill="url(#purpleGrad)" filter="url(#glowPurple)"/>
+    <text x="308" y="473" text-anchor="middle" font-size="11" font-weight="700" fill="white">4</text>
+    <text x="330" y="464" font-size="12" font-weight="700" fill="#0f172a">Archetype Match</text>
+    <text x="330" y="478" font-size="9" fill="#64748b">AI_ML  ·  Data_Eng  ·  Analytics  ·  Gov_Ethics</text>
+    <text x="590" y="471" font-size="14" text-anchor="middle">🎯</text>
+  </g>
+
+  <!-- Connector 4→5 -->
+  <line x1="449" y1="494" x2="449" y2="508" stroke="url(#connectorGrad)" stroke-width="1.5" class="connector-pulse"/>
+
+  <!-- Stage 5 — amber -->
+  <g class="stage-5" filter="url(#cardShadow)">
+    <rect x="280" y="508" width="340" height="52" rx="8" fill="white" stroke="#d97706" stroke-width="1.5"/>
+    <circle cx="308" cy="534" r="13" fill="url(#amberGrad)" filter="url(#glowAmber)"/>
+    <text x="308" y="539" text-anchor="middle" font-size="11" font-weight="700" fill="white">5</text>
+    <text x="330" y="530" font-size="12" font-weight="700" fill="#0f172a">Resume Generation</text>
+    <text x="330" y="544" font-size="9" fill="#64748b">Ollama / Mistral local  ·  archetype_resume_generator.py</text>
+    <text x="590" y="537" font-size="14" text-anchor="middle">📄</text>
+  </g>
+
+  <!-- Connector 5→6 -->
+  <line x1="449" y1="560" x2="449" y2="574" stroke="url(#connectorGrad)" stroke-width="1.5" class="connector-pulse"/>
+
+  <!-- Stage 6 — green -->
+  <g class="stage-6" filter="url(#cardShadow)">
+    <rect x="280" y="574" width="340" height="52" rx="8" fill="white" stroke="#059669" stroke-width="1.5"/>
+    <circle cx="308" cy="600" r="13" fill="url(#greenGrad)" filter="url(#glowGreen)"/>
+    <text x="308" y="605" text-anchor="middle" font-size="11" font-weight="700" fill="white">6</text>
+    <text x="330" y="596" font-size="12" font-weight="700" fill="#0f172a">HTML Digest</text>
+    <text x="330" y="610" font-size="9" fill="#64748b">DailyReportGenerator  ·  pipeline stats  ·  Gmail SMTP</text>
+    <text x="590" y="603" font-size="14" text-anchor="middle">📊</text>
+  </g>
+
+  <!-- Connector 6→7 -->
+  <line x1="449" y1="626" x2="449" y2="640" stroke="url(#connectorGrad)" stroke-width="1.5" class="connector-pulse"/>
+
+  <!-- Stage 7 — green -->
+  <g class="stage-7" filter="url(#cardShadow)">
+    <rect x="280" y="640" width="340" height="52" rx="8" fill="white" stroke="#059669" stroke-width="1.5"/>
+    <circle cx="308" cy="666" r="13" fill="url(#greenGrad)" filter="url(#glowGreen)"/>
+    <text x="308" y="671" text-anchor="middle" font-size="11" font-weight="700" fill="white">7</text>
+    <text x="330" y="662" font-size="12" font-weight="700" fill="#0f172a">iMessage Briefing</text>
+    <text x="330" y="676" font-size="9" fill="#64748b">AppleScript  ·  iPhone delivery  ·  Memory Brain log</text>
+    <text x="590" y="669" font-size="14" text-anchor="middle">📱</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- LEFT COLUMN — Persistence -->
+  <!-- ═══════════════════════════════════════════ -->
+  <text x="30" y="360" font-size="8" fill="#94a3b8" letter-spacing="2.5">PERSISTENCE</text>
+
+  <!-- MongoDB card -->
+  <g class="left-1" filter="url(#cardShadow)">
+    <rect x="14" y="368" width="188" height="76" rx="8" fill="white" stroke="#059669" stroke-width="1.5"/>
+    <rect x="14" y="368" width="188" height="4" rx="2" fill="url(#greenGrad)"/>
+    <text x="28" y="392" font-size="13">🗄</text>
+    <text x="48" y="390" font-size="11" font-weight="700" fill="#0f172a">MongoDB</text>
+    <text x="48" y="403" font-size="9" fill="#64748b">localhost:27017</text>
+    <text x="48" y="415" font-size="9" fill="#64748b">147+ job documents</text>
+    <rect x="28" y="424" width="70" height="13" rx="6" fill="rgba(5,150,105,0.1)" stroke="rgba(5,150,105,0.3)" stroke-width="1"/>
+    <text x="63" y="434" text-anchor="middle" font-size="8" fill="#059669" font-weight="700">aria_career db</text>
+  </g>
+
+  <!-- Memory Brain card -->
+  <g class="left-2" filter="url(#cardShadow)">
+    <rect x="14" y="460" width="188" height="76" rx="8" fill="white" stroke="#7c3aed" stroke-width="1.5"/>
+    <rect x="14" y="460" width="188" height="4" rx="2" fill="url(#purpleGrad)"/>
+    <text x="28" y="484" font-size="13">🧠</text>
+    <text x="48" y="482" font-size="11" font-weight="700" fill="#0f172a">Memory Brain</text>
+    <text x="48" y="495" font-size="9" fill="#64748b">central_memory.db</text>
+    <text x="48" y="507" font-size="9" fill="#64748b">30+ tables · MCP layer</text>
+    <rect x="28" y="516" width="44" height="13" rx="6" fill="rgba(124,58,237,0.1)" stroke="rgba(124,58,237,0.3)" stroke-width="1"/>
+    <text x="50" y="526" text-anchor="middle" font-size="8" fill="#7c3aed" font-weight="700">SQLite</text>
+  </g>
+
+  <!-- Persistence → Pipeline connectors -->
+  <path d="M 202 406 Q 250 406 280 402" stroke="#059669" stroke-width="1.2" fill="none" stroke-dasharray="4 3" class="flow-line-slow" opacity="0.6" marker-end="url(#arrowGreen)"/>
+  <path d="M 202 498 Q 250 498 280 468" stroke="#7c3aed" stroke-width="1.2" fill="none" stroke-dasharray="4 3" class="flow-line-slow" opacity="0.6" marker-end="url(#arrowPurple)"/>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- RIGHT COLUMN — Dashboard -->
+  <!-- ═══════════════════════════════════════════ -->
+  <text x="700" y="360" font-size="8" fill="#94a3b8" letter-spacing="2.5">DASHBOARD</text>
+
+  <!-- Job Pipeline card -->
+  <g class="right-1" filter="url(#cardShadow)">
+    <rect x="698" y="368" width="188" height="68" rx="8" fill="white" stroke="#0099bb" stroke-width="1.5"/>
+    <rect x="698" y="368" width="188" height="4" rx="2" fill="url(#cyanGrad)"/>
+    <text x="712" y="390" font-size="12">🖥</text>
+    <text x="730" y="390" font-size="11" font-weight="700" fill="#0f172a">Job Pipeline</text>
+    <text x="712" y="403" font-size="9" fill="#64748b">localhost:5100 · live MongoDB view</text>
+    <rect x="712" y="412" width="64" height="13" rx="6" fill="rgba(0,153,187,0.1)" stroke="rgba(0,153,187,0.3)" stroke-width="1"/>
+    <text x="744" y="422" text-anchor="middle" font-size="8" fill="#0099bb" font-weight="700">aria_api.py</text>
+  </g>
+
+  <!-- JAIA Builder card -->
+  <g class="right-2" filter="url(#cardShadow)">
+    <rect x="698" y="450" width="188" height="68" rx="8" fill="white" stroke="#d97706" stroke-width="1.5"/>
+    <rect x="698" y="450" width="188" height="4" rx="2" fill="url(#amberGrad)"/>
+    <text x="712" y="472" font-size="12">📝</text>
+    <text x="730" y="472" font-size="11" font-weight="700" fill="#0f172a">JAIA Builder</text>
+    <text x="712" y="485" font-size="9" fill="#64748b">localhost:5200 · Ollama · .docx export</text>
+    <rect x="712" y="494" width="88" height="13" rx="6" fill="rgba(217,119,6,0.1)" stroke="rgba(217,119,6,0.3)" stroke-width="1"/>
+    <text x="756" y="504" text-anchor="middle" font-size="8" fill="#d97706" font-weight="700">resume_server.py</text>
+  </g>
+
+  <!-- Career Intel card -->
+  <g class="right-3" filter="url(#cardShadow)">
+    <rect x="698" y="532" width="188" height="68" rx="8" fill="white" stroke="#059669" stroke-width="1.5"/>
+    <rect x="698" y="532" width="188" height="4" rx="2" fill="url(#greenGrad)"/>
+    <text x="712" y="554" font-size="12">📈</text>
+    <text x="730" y="554" font-size="11" font-weight="700" fill="#0f172a">Career Intel</text>
+    <text x="712" y="567" font-size="9" fill="#64748b">localhost:8501 · Streamlit · Memory Brain</text>
+    <rect x="712" y="576" width="68" height="13" rx="6" fill="rgba(5,150,105,0.1)" stroke="rgba(5,150,105,0.3)" stroke-width="1"/>
+    <text x="746" y="586" text-anchor="middle" font-size="8" fill="#059669" font-weight="700">dashboard.py</text>
+  </g>
+
+  <!-- Dashboard ← Pipeline connectors -->
+  <path d="M 620 270 Q 660 270 698 392" stroke="#0099bb" stroke-width="1.2" fill="none" stroke-dasharray="4 3" class="flow-line-slow" opacity="0.5" marker-end="url(#arrowCyan)"/>
+  <path d="M 620 534 Q 660 534 698 484" stroke="#d97706" stroke-width="1.2" fill="none" stroke-dasharray="4 3" class="flow-line-slow" opacity="0.5"/>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SCORING FORMULA -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g class="formula-box">
+    <rect x="200" y="716" width="500" height="66" rx="10" fill="white" stroke="#7c3aed" stroke-width="1.5" filter="url(#cardShadow)"/>
+    <rect x="200" y="716" width="500" height="4" rx="2" fill="url(#purpleGrad)"/>
+    <text x="450" y="737" text-anchor="middle" font-size="8.5" fill="#94a3b8" letter-spacing="2">SCORING FORMULA  —  aria_integrations.py · _score_job()</text>
+    <text x="450" y="758" text-anchor="middle" font-size="11.5" fill="#334155">
+      confidence = <tspan fill="#0099bb" font-weight="700">semantic</tspan> × <tspan fill="#7c3aed">0.65</tspan>  +  <tspan fill="#0099bb" font-weight="700">location</tspan> × <tspan fill="#7c3aed">0.20</tspan>  +  <tspan fill="#0099bb" font-weight="700">recency</tspan> × <tspan fill="#7c3aed">0.15</tspan>  −  <tspan fill="#ef4444" font-weight="700">neg_penalty</tspan>
+    </text>
+    <text x="450" y="774" text-anchor="middle" font-size="8.5" fill="#94a3b8">top-5 skill cosine avg  ·  sentence-transformers  ·  55 skills from rosalina_resume_master.json</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- STATS ROW -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g class="stats-row">
+    <!-- Stat 1 -->
+    <rect x="60" y="808" width="140" height="68" rx="10" fill="white" stroke="#e2e8f0" stroke-width="1" filter="url(#cardShadow)"/>
+    <text x="130" y="844" text-anchor="middle" font-size="28" font-weight="900" fill="url(#cyanGrad)">55</text>
+    <text x="130" y="862" text-anchor="middle" font-size="8" fill="#94a3b8" letter-spacing="1.5">VERIFIED SKILLS</text>
+
+    <!-- Stat 2 -->
+    <rect x="220" y="808" width="140" height="68" rx="10" fill="white" stroke="#e2e8f0" stroke-width="1" filter="url(#cardShadow)"/>
+    <text x="290" y="844" text-anchor="middle" font-size="28" font-weight="900" fill="url(#purpleGrad)">147+</text>
+    <text x="290" y="862" text-anchor="middle" font-size="8" fill="#94a3b8" letter-spacing="1.5">JOBS CACHED</text>
+
+    <!-- Stat 3 -->
+    <rect x="380" y="808" width="140" height="68" rx="10" fill="white" stroke="#e2e8f0" stroke-width="1" filter="url(#cardShadow)"/>
+    <text x="450" y="844" text-anchor="middle" font-size="28" font-weight="900" fill="url(#greenGrad)">7</text>
+    <text x="450" y="862" text-anchor="middle" font-size="8" fill="#94a3b8" letter-spacing="1.5">PIPELINE STAGES</text>
+
+    <!-- Stat 4 -->
+    <rect x="540" y="808" width="140" height="68" rx="10" fill="white" stroke="#e2e8f0" stroke-width="1" filter="url(#cardShadow)"/>
+    <text x="610" y="844" text-anchor="middle" font-size="28" font-weight="900" fill="url(#amberGrad)">4</text>
+    <text x="610" y="862" text-anchor="middle" font-size="8" fill="#94a3b8" letter-spacing="1.5">RESUME ARCHETYPES</text>
+
+    <!-- Stat 5 -->
+    <rect x="700" y="808" width="140" height="68" rx="10" fill="white" stroke="#e2e8f0" stroke-width="1" filter="url(#cardShadow)"/>
+    <text x="770" y="844" text-anchor="middle" font-size="28" font-weight="900" fill="url(#cyanGrad)">0</text>
+    <text x="770" y="862" text-anchor="middle" font-size="8" fill="#94a3b8" letter-spacing="1.5">CLOUD APIS USED</text>
+  </g>
+
+  <!-- Bottom label -->
+  <text x="450" y="910" text-anchor="middle" font-size="8.5" fill="#cbd5e1" letter-spacing="1">
+    github.com/rosalinatorres888/aria-career-assistant
+  </text>
+
+</svg>
